@@ -1,6 +1,21 @@
-<<<<<<< HEAD
-# NextShop CRM Demo
-=======
-# NextShop-CRM-Demo
-Next.js SaaS Dashboard with Stripe Subscriptions and CRM Analytics (Demo project for Upwork portfolio)
->>>>>>> 1875af64c1060e0961d4ed6374a036aff613e967
+# NextShop CRM
+
+Base Next.js 15 project configured with TypeScript, ESLint, and Tailwind CSS 4 for the NextShop CRM demo.
+
+## Getting Started
+
+Install dependencies (already completed if you pulled the repo) and run the development server:
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) to view the app. Edit `src/app/page.tsx` or add files under `src/app` to see live updates.
+
+Global styles are defined in `src/app/globals.css`, which loads Tailwind's base, components, and utilities layers to accelerate UI work.
+
+## Useful Links
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
