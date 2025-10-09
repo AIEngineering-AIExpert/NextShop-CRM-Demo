@@ -45,11 +45,8 @@ const sharedTooltipStyle = {
 
 export default function PredictiveCards() {
   return (
-    <section className="mt-10">
-      <h2
-        className="text-lg font-semibold mb-4"
-        style={{ color: "var(--accent-green)" }}
-      >
+    <section>
+      <h2 className="text-2xl font-bold text-white shadow-[0_0_5px_rgba(16,185,129,0.5)] mb-4">
         Predictive Analytics
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

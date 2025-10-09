@@ -24,11 +24,11 @@ const formatCurrency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-const tooltipStyle = {
-  backgroundColor: "rgba(15, 23, 42, 0.9)",
-  border: "1px solid rgba(0, 255, 136, 0.35)",
-  borderRadius: "12px",
-  color: "#E2E8F0",
+const formatTooltipValue = (value: number) => {
+  if (value >= 1000) {
+    return `$${(value / 1000).toFixed(1)}k`;
+  }
+  return formatCurrency(value);
 };
 
 const CustomTooltip = ({
@@ -37,13 +37,26 @@ const CustomTooltip = ({
   label,
 }: TooltipProps<number, string>) => {
   if (active && payload && payload.length) {
+    const datum = payload[0];
+    const value = Number(datum.value);
+    const rawDate = datum.payload?.date ?? label;
+    const formattedDate = datum.payload?.date
+      ? new Date(datum.payload.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+      : rawDate;
     return (
-      <div style={tooltipStyle} className="px-3 py-2 text-sm">
+      <div className="bg-black/80 text-white px-3 py-2 rounded-lg border border-[rgba(34,201,151,0.35)] shadow-lg backdrop-blur">
+        <p className="text-xs uppercase tracking-wide text-white/60">Revenue</p>
         <p
-          className="font-medium"
+          className="text-sm font-semibold"
           style={{ color: "var(--accent-green)" }}
         >
-          {label} • {formatCurrency(Number(payload[0].value))}
+          {formatTooltipValue(value)}{" "}
+          <span className="text-white/70">
+            ({formattedDate})
+          </span>
         </p>
       </div>
     );
@@ -59,7 +72,9 @@ const DashboardChart = () => {
           className="h-[2px] w-16 rounded-full mb-2"
           style={{ background: "var(--accent-gradient)" }}
         />
-        <h2 className="text-lg font-semibold text-primary">Weekly Revenue</h2>
+        <h2 className="text-2xl font-bold text-white shadow-[0_0_5px_rgba(16,185,129,0.5)] mb-4">
+          Weekly Revenue
+        </h2>
       </div>
       <div className="h-72 rounded-xl border border-[var(--border-color)] bg-[rgba(31,31,31,0.9)] p-4 shadow-inner">
         <ResponsiveContainer width="100%" height="100%">

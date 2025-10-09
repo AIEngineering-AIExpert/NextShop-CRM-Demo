@@ -3,6 +3,9 @@ import { Inter } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import SidebarLink from "@/components/ui/SidebarLink";
+import NotificationDropdown from "@/components/NotificationDropdown";
+import ThemeToggle from "@/components/ThemeToggle";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body
         className={`${inter.variable} min-h-screen bg-[var(--bg-main)] text-primary font-sans antialiased transition-colors`}
       >
@@ -61,6 +64,9 @@ export default function RootLayout({
               <SidebarLink key={item.href} {...item} />
             ))}
           </nav>
+          <div className="mt-6">
+            <ThemeToggle />
+          </div>
           <div className="pt-6">
             <SidebarLink
               href="/login"
@@ -86,23 +92,44 @@ export default function RootLayout({
                 </span>
                 NextShop CRM
               </Link>
-              <nav className="flex items-center gap-2">
-                {[
-                  ...navItems,
-                  { href: "/login", label: "Logout", icon: "logout" as const },
-                ].map((item) => (
-                  <SidebarLink
-                    key={`mobile-${item.href}`}
-                    {...item}
-                    variant="mobile"
-                  />
-                ))}
-              </nav>
+              <div className="flex items-center gap-3">
+                <nav className="flex items-center gap-2">
+                  {[
+                    ...navItems,
+                    { href: "/login", label: "Logout", icon: "logout" as const },
+                  ].map((item) => (
+                    <SidebarLink
+                      key={`mobile-${item.href}`}
+                      {...item}
+                      variant="mobile"
+                    />
+                  ))}
+                </nav>
+                <NotificationDropdown />
+                <ThemeToggle className="w-auto" />
+              </div>
             </div>
           </header>
 
+          <div className="hidden items-center justify-end gap-4 px-8 pt-6 md:flex">
+            <div className="flex items-center gap-3">
+              <NotificationDropdown />
+              <ThemeToggle className="w-auto" />
+            </div>
+          </div>
+
           <main className="px-4 py-6 md:px-8">{children}</main>
         </div>
+        <Toaster
+          position="top-right"
+          richColors
+          theme="dark"
+          toastOptions={{
+            classNames: {
+              toast: "border border-[rgba(34,201,151,0.35)] bg-[rgba(18,18,18,0.95)] text-primary",
+            },
+          }}
+        />
       </body>
     </html>
   );

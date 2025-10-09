@@ -6,16 +6,9 @@ import PredictiveCards from "@/components/PredictiveCards";
 import LiveFeed from "@/components/LiveFeed";
 import TopProducts from "@/components/TopProducts";
 import InventoryWidget from "@/components/InventoryWidget";
-import { mockSales } from "@/lib/data";
+import ConversionFunnel from "@/components/ConversionFunnel";
 
 export default function DashboardPage() {
-  const totalRevenue = mockSales.reduce((sum, sale) => sum + sale.revenue, 0);
-  const formattedTotal = totalRevenue.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-
   return (
     <main className="p-10 space-y-10 max-w-6xl mx-auto fade-in">
       <header className="space-y-3 text-primary">
@@ -29,27 +22,24 @@ export default function DashboardPage() {
         </p>
       </header>
 
-      <HeroMetrics />
+      <div className="space-y-8">
+        <HeroMetrics />
 
-      <section className="gradient-border glass p-8 text-primary">
-        <p className="text-sm uppercase tracking-widest text-secondary">
-          Total Revenue
-        </p>
-        <div className="mt-3 text-4xl font-semibold">
-          <span className="glow-number accent-text">{formattedTotal}</span>
-        </div>
-      </section>
+        <section className="gradient-border glass p-8">
+          <DashboardChart />
+        </section>
 
-      <section className="gradient-border glass p-8">
-        <DashboardChart />
-      </section>
+        <section>
+          <h2 className="text-2xl font-bold text-white shadow-[0_0_5px_rgba(16,185,129,0.5)] mb-4">
+            Growth Overview
+          </h2>
+          <GrowthWidgets />
+        </section>
 
-      <section className="mt-10">
-        <h2 className="text-xl font-semibold mb-4 accent-text">Growth Overview</h2>
-        <GrowthWidgets />
-      </section>
+        <ConversionFunnel />
 
-      <PredictiveCards />
+        <PredictiveCards />
+      </div>
 
       <section className="mt-10">
         <TopProducts />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Card from "@/components/ui/Card";
 import {
   Mail,
@@ -12,6 +12,7 @@ import {
   CornerUpRight,
 } from "lucide-react";
 import { ResponsiveContainer, LineChart, Line } from "recharts";
+import { toast } from "sonner";
 
 type Client = {
   id: number;
@@ -123,8 +124,14 @@ const engagementColor = (value: number) => {
   return "#ef4444";
 };
 
+const engagementLevel = (value: number) => {
+  if (value > 70) return "High";
+  if (value > 40) return "Medium";
+  return "Low";
+};
+
 const quickActionForSegment = (segment: Client["segment"]) => {
-  if (segment === "At-Risk") return "Retention";
+  if (segment === "At-Risk") return "Retain";
   if (segment === "Trial") return "Convert";
   return "Upsell";
 };
@@ -135,7 +142,6 @@ export default function ClientTable() {
   const pathname = usePathname();
 
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
-  const [banner, setBanner] = useState<string | null>(null);
   const [hoverId, setHoverId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -179,15 +185,15 @@ export default function ClientTable() {
   }, [filtered]);
 
   const handleQuickAction = (client: Client) => {
-    const action =
-      client.segment === "At-Risk"
-        ? "Retention Nudge"
-        : client.segment === "Trial"
-        ? "Convert Trial"
-        : "Upsell Offer";
-
-    setBanner(`✅ ${action} sent to ${client.name}`);
-    setTimeout(() => setBanner(null), 2500);
+    const actionLabel = quickActionForSegment(client.segment);
+    toast.success(`${actionLabel} sent to ${client.name}!`, {
+      description:
+        client.segment === "At-Risk"
+          ? "Triggered retention playbook with incentive."
+          : client.segment === "Trial"
+          ? "Conversion campaign launched for trial user."
+          : "Upsell offer delivered to boost revenue.",
+    });
   };
 
   return (
@@ -243,17 +249,6 @@ export default function ClientTable() {
         </div>
       </div>
 
-      {banner && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="mb-4 rounded-lg border border-[rgba(34,201,151,0.25)] bg-[rgba(34,201,151,0.1)] px-3 py-2 text-sm"
-          style={{ color: "var(--accent-green)" }}
-        >
-          {banner}
-        </div>
-      )}
-
       <div className="overflow-x-auto">
         <table className="table-sticky w-full text-sm text-primary">
           <thead>
@@ -276,6 +271,7 @@ export default function ClientTable() {
                 client.segment === "At-Risk"
                   ? "ring-1 ring-red-500/20 bg-red-500/5"
                   : "";
+              const engagementDescriptor = engagementLevel(client.engagement);
 
               return (
                 <tr
@@ -312,21 +308,31 @@ export default function ClientTable() {
                       <div
                         className="h-2 transition-all duration-700"
                         style={{ width: `${client.engagement}%`, backgroundColor: color }}
+                        title={`${client.engagement}% ${engagementDescriptor}`}
                       />
                     </div>
                   </td>
                   <td className="w-24">
-                    <ResponsiveContainer width="100%" height={24}>
-                      <LineChart data={chartData}>
-                        <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
+                    <div className="hidden md:block w-24">
+                      <ResponsiveContainer width={96} height={24}>
+                        <LineChart data={chartData}>
+                          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="md:hidden">
+                      <ResponsiveContainer width={60} height={20} className="sparkline">
+                        <LineChart data={chartData}>
+                          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
                   </td>
                   <td className="text-secondary">{client.lastPurchase}</td>
                   <td className="text-right relative">
                     <button
                       onClick={() => handleQuickAction(client)}
-                      className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border transition transform hover:scale-105 hover:shadow-[0_0_20px_rgba(34,197,94,0.25)] ${
+                      className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border transition hover:scale-105 green-shadow ${
                         client.segment === "At-Risk"
                           ? "border-red-500/50 text-red-300 bg-red-500/10 hover:bg-red-500/20"
                           : "border-[rgba(34,201,151,0.4)] text-[var(--accent-green)] bg-[rgba(34,201,151,0.1)] hover:bg-[rgba(34,201,151,0.18)]"

@@ -39,7 +39,7 @@ const HeroMetrics = () => {
   const isDeltaPositive = deltaPct >= 0;
 
   return (
-    <section className="grid gap-6 md:grid-cols-3 mb-8" aria-live="polite">
+    <section className="grid gap-4 md:grid-cols-3" aria-live="polite">
       <div className="glass gradient-border p-6 fade-in relative overflow-hidden">
         <div className="absolute top-4 right-4 opacity-80">
           <DollarSign

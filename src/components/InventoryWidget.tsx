@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Card from "@/components/ui/Card";
 import { AlertTriangle, Battery, PackageCheck } from "lucide-react";
 
@@ -66,6 +66,46 @@ const initialStock: InventoryItem[] = [
 
 export default function InventoryWidget() {
   const [data, setData] = useState<InventoryItem[]>(initialStock);
+  const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
+
+  const restockPlans = useMemo(
+    () =>
+      new Map<
+        InventoryItem["name"],
+        {
+          suggestion: string;
+          revenue: string;
+        }
+      >([
+        [
+          "iPhone 17 Pro Max",
+          { suggestion: "Order 50 units", revenue: "+$500 projected revenue" },
+        ],
+        [
+          "Apple Vision Pro 2",
+          { suggestion: "Reserve 30 units", revenue: "+$1,200 projected revenue" },
+        ],
+        [
+          "AirPods Max 2",
+          { suggestion: "Order 40 units", revenue: "+$300 projected revenue" },
+        ],
+        [
+          "MacBook Air M4",
+          { suggestion: "Order 20 units", revenue: "+$900 projected revenue" },
+        ],
+        [
+          "Apple Watch S10",
+          { suggestion: "Order 60 units", revenue: "+$450 projected revenue" },
+        ],
+        [
+          "iPad Pro M4 OLED",
+          { suggestion: "Order 35 units", revenue: "+$650 projected revenue" },
+        ],
+      ]),
+    [],
+  );
+
+  const closeModal = () => setSelectedProduct(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -85,60 +125,109 @@ export default function InventoryWidget() {
   }, []);
 
   return (
-    <Card className="mt-10">
-      <h2
-        className="text-lg font-semibold mb-4 flex items-center gap-2"
-        style={{ color: "var(--accent-green)" }}
-      >
-        <PackageCheck style={{ color: "var(--accent-green)" }} /> Inventory &
-        Stock Alerts
-      </h2>
-      <div className="space-y-4">
-        {data.map((product) => {
-          const pct = Math.round((product.stock / product.total) * 100);
-          const progressColor =
-            pct > 60 ? "bg-green-500" : pct > 20 ? "bg-yellow-500" : "bg-red-500";
-          const statusIcon =
-            pct > 60 ? (
-              <Battery className="w-4 h-4 text-green-400" />
-            ) : pct > 20 ? (
-              <Battery className="w-4 h-4 text-yellow-400" />
-            ) : (
-              <AlertTriangle className="w-4 h-4 text-red-400" />
-            );
+    <>
+      <Card className="mt-10">
+        <h2
+          className="text-lg font-semibold mb-4 flex items-center gap-2"
+          style={{ color: "var(--accent-green)" }}
+        >
+          <PackageCheck style={{ color: "var(--accent-green)" }} /> Inventory &
+          Stock Alerts
+        </h2>
+        <div className="space-y-4">
+          {data.map((product) => {
+            const pct = Math.round((product.stock / product.total) * 100);
+            const progressColor =
+              pct > 60 ? "bg-green-500" : pct > 20 ? "bg-yellow-500" : "bg-red-500";
+            const statusIcon =
+              pct > 60 ? (
+                <Battery className="w-4 h-4 text-green-400" />
+              ) : pct > 20 ? (
+                <Battery className="w-4 h-4 text-yellow-400" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 text-red-400" />
+              );
 
-          return (
-            <div key={product.id} className="p-4 rounded-xl bg-[rgba(24,24,24,0.75)]">
-              <div className="flex justify-between items-center mb-1">
-                <div>
-                  <div className="text-primary font-medium">
-                    {product.name}
+            return (
+              <div
+                key={product.id}
+                className="p-4 rounded-xl bg-[rgba(24,24,24,0.75)]"
+              >
+                <div className="flex justify-between items-center mb-1">
+                  <div>
+                    <div className="text-primary font-medium">
+                      {product.name}
+                    </div>
+                    <div className="text-xs text-secondary">
+                      {product.category}
+                    </div>
                   </div>
-                  <div className="text-xs text-secondary">
-                    {product.category}
+                  <div className="flex items-center gap-2 text-sm text-secondary">
+                    {statusIcon}
+                    <span>${product.price}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-secondary">
-                  {statusIcon}
-                  <span>${product.price}</span>
+                <div className="w-full bg-[rgba(48,48,48,0.85)] rounded-full h-2 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProduct(product)}
+                    className={`${progressColor} block h-full w-full cursor-pointer transition-all duration-700`}
+                    style={{ width: `${pct}%`, height: "100%" }}
+                    title={`Stock: ${product.stock} units`}
+                    aria-label={`Restock suggestion for ${product.name}`}
+                  />
+                </div>
+                <div className="flex justify-between text-xs text-secondary mt-1">
+                  <span>{pct}% in stock</span>
+                  <span>
+                    {product.stock}/{product.total}
+                  </span>
                 </div>
               </div>
-              <div className="w-full bg-[rgba(48,48,48,0.85)] rounded-full h-2 overflow-hidden">
-                <div
-                  className={`${progressColor} h-2 transition-all duration-700`}
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-xs text-secondary mt-1">
-                <span>{pct}% in stock</span>
-                <span>
-                  {product.stock}/{product.total}
-                </span>
-              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {selectedProduct ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="restock-modal-title"
+        >
+          <div className="glass gradient-border w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <h3
+              id="restock-modal-title"
+              className="text-lg font-semibold mb-2 flex items-center gap-2"
+              style={{ color: "var(--accent-green)" }}
+            >
+              AI Restock Tip
+            </h3>
+            <p className="text-sm text-secondary mb-4">
+              {selectedProduct.name} — current stock {selectedProduct.stock} of{" "}
+              {selectedProduct.total}.
+            </p>
+            <div className="space-y-2 text-sm text-primary">
+              <p>
+                {restockPlans.get(selectedProduct.name)?.suggestion ??
+                  "Order 25 units to stabilize demand."}
+              </p>
+              <p className="text-[var(--accent-green)]">
+                {restockPlans.get(selectedProduct.name)?.revenue ??
+                  "+$320 projected revenue"}
+              </p>
             </div>
-          );
-        })}
-      </div>
-    </Card>
+            <button
+              type="button"
+              onClick={closeModal}
+              className="mt-6 inline-flex w-full items-center justify-center rounded-lg border border-[rgba(34,201,151,0.35)] bg-[rgba(34,201,151,0.18)] px-4 py-2 text-sm font-semibold text-[var(--accent-green)] transition hover:bg-[rgba(34,201,151,0.24)]"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

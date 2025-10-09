@@ -6,9 +6,11 @@ import {
   AlertCircle,
   Bot,
   Lightbulb,
+  Mic,
   Send,
   TrendingUp,
 } from "lucide-react";
+import { toast } from "sonner";
 
 type Message = {
   sender: "user" | "bot";
@@ -44,12 +46,25 @@ const quickActions = [
   },
 ] as const;
 
+type MinimalSpeechRecognition = {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript?: string }>> }) => void) | null;
+  onerror: ((event: { error?: string }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
 export default function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>(() => [
     ...initialMessages,
   ]);
   const [input, setInput] = useState("");
+  const [isListening, setIsListening] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const recognitionRef = useRef<MinimalSpeechRecognition | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -83,6 +98,82 @@ export default function AIAssistant() {
             };
       setMessages((prev) => [...prev, reply]);
     }, 800);
+  };
+
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
+    };
+  }, []);
+
+  const handleVoice = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      toast.info("Voice capture cancelled");
+      return;
+    }
+
+    if (typeof window !== "undefined") {
+      const speechWindow = window as typeof window & {
+        SpeechRecognition?: new () => MinimalSpeechRecognition;
+        webkitSpeechRecognition?: new () => MinimalSpeechRecognition;
+      };
+
+      const SpeechRecognition =
+        speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.lang = "en-US";
+          recognition.interimResults = false;
+          recognition.maxAlternatives = 1;
+
+          recognition.onresult = (event) => {
+            const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+            if (transcript) {
+              setInput(transcript);
+              toast.info(`Transcribed: “${transcript}”`);
+            }
+          };
+
+          recognition.onerror = (event) => {
+            toast.error(
+              `Voice capture error: ${(event as { error?: string }).error ?? "unknown"}`,
+            );
+          };
+
+          recognition.onend = () => {
+            setIsListening(false);
+            recognitionRef.current = null;
+          };
+
+          recognitionRef.current = recognition;
+          recognition.start();
+          setIsListening(true);
+          toast.info("Listening… speak your query");
+          return;
+        } catch (error) {
+          // fall back to mock if instantiation fails
+          console.warn("Speech recognition unavailable, using mock.", error);
+        }
+      }
+    }
+
+    setIsListening(true);
+    toast.info("Listening… speak your query");
+    setTimeout(() => {
+      const mockTranscript = "Show churn risk";
+      setInput(mockTranscript);
+      toast.info(`Transcribed: “${mockTranscript}”`);
+      setIsListening(false);
+    }, 2000);
+  };
+
+  const handleGenerateInsightToast = () => {
+    toast.success("AI Insight: Focus on iPhone upsell +20% revenue");
   };
 
   return (
@@ -137,6 +228,28 @@ export default function AIAssistant() {
         >
           <Send size={16} />
         </button>
+        <button
+          type="button"
+          onClick={handleVoice}
+          aria-pressed={isListening}
+          className={`ml-1 rounded-lg border border-[rgba(34,201,151,0.35)] p-2 transition ${
+            isListening ? "animate-pulse" : ""
+          }`}
+          style={{
+            backgroundColor: isListening
+              ? "rgba(34,201,151,0.3)"
+              : "rgba(34,201,151,0.15)",
+            color: "var(--accent-green)",
+            boxShadow: isListening
+              ? "0 0 16px rgba(34,201,151,0.45)"
+              : "0 0 10px rgba(34,201,151,0.25)",
+          }}
+        >
+          <Mic size={16} />
+          <span className="sr-only">
+            {isListening ? "Stop voice input" : "Start voice input"}
+          </span>
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-2 mt-4">
@@ -153,6 +266,17 @@ export default function AIAssistant() {
             {action.icon} {action.label}
           </button>
         ))}
+      </div>
+
+      <div className="mt-5 flex justify-end">
+        <button
+          type="button"
+          onClick={handleGenerateInsightToast}
+          className="inline-flex items-center gap-2 rounded-lg border border-[rgba(34,201,151,0.35)] bg-[rgba(34,201,151,0.14)] px-4 py-2 text-sm font-semibold text-[var(--accent-green)] transition hover:scale-105 green-shadow"
+        >
+          <Lightbulb size={16} />
+          Generate Insight
+        </button>
       </div>
     </Card>
   );
